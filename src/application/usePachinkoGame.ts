@@ -7,6 +7,7 @@ import {
   type Hold,
   type ReelSymbol,
 } from '../domain/pachinko'
+import { playReachSound, playReelStartSound, playWinSound, primeReelStartSound } from '../infrastructure/reelSound'
 
 type GameStatus = 'idle' | 'spinning' | 'reachAnnounced' | 'reach' | 'betweenDraws' | 'won'
 type ReelStopState = [boolean, boolean, boolean]
@@ -120,6 +121,8 @@ export const usePachinkoGame = () => {
   }, [])
 
   const addHold = useCallback(() => {
+    void primeReelStartSound()
+
     setState((current) => {
       if (current.status === 'won' || current.holds.length >= MAX_HOLDS) {
         return current
@@ -135,6 +138,8 @@ export const usePachinkoGame = () => {
   }, [])
 
   const toggleAutoConsumeHolds = useCallback(() => {
+    void primeReelStartSound()
+
     setState((current) => ({
       ...current,
       autoConsumeHolds: !current.autoConsumeHolds,
@@ -149,6 +154,7 @@ export const usePachinkoGame = () => {
 
     runningRef.current = true
     clearTimers()
+    void playReelStartSound()
 
     const result = createDrawResult()
 
@@ -200,6 +206,8 @@ export const usePachinkoGame = () => {
         })
 
         if (isReachAnnounceStop) {
+          void playReachSound()
+
           reachMovieTimerRef.current = window.setTimeout(() => {
             setState((current) => ({
               ...current,
@@ -257,6 +265,7 @@ export const usePachinkoGame = () => {
 
       if (result.isWin) {
         const winningHold = current.holds[0] ?? null
+        void playWinSound()
 
         return {
           ...revealedState,

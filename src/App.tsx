@@ -14,7 +14,7 @@ function App() {
     : undefined
 
   return (
-    <main className="pachinko-app">
+    <main className={`pachinko-app ${game.isGameOver ? 'is-rainbow-screen' : ''}`}>
       <section className="machine">
         <header className="machine-header">
           <p className="kicker">Akio Pach</p>
@@ -38,7 +38,7 @@ function App() {
         </div>
 
         {game.winningHold && (
-          <div className="winning-hold" style={winningHoldStyle}>
+          <div className="winning-hold is-rainbow" style={winningHoldStyle}>
             <span className="hold-lamp is-active is-current" aria-hidden="true" />
             <span>{game.winningHold.color.name}保留で当選</span>
           </div>

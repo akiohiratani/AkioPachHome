@@ -10,6 +10,10 @@
     #17100f;
 }
 
+.pachinko-app.is-rainbow-screen {
+  animation: rainbow-screen 0.86s linear infinite;
+}
+
 .machine {
   width: min(920px, 100%);
   display: grid;
@@ -114,6 +118,11 @@
   color: #fff8e5;
   background: rgba(255, 255, 255, 0.08);
   font-weight: 800;
+}
+
+.winning-hold.is-rainbow {
+  animation: rainbow-win 0.78s linear infinite;
+  border-color: rgba(255, 255, 255, 0.78);
 }
 
 .holds {
@@ -281,6 +290,94 @@ button.secondary {
 
   to {
     box-shadow: 0 0 34px rgba(255, 213, 111, 0.58);
+  }
+}
+
+@keyframes rainbow-win {
+  0% {
+    background: rgba(239, 68, 68, 0.38);
+    box-shadow: 0 0 22px rgba(239, 68, 68, 0.72);
+  }
+
+  16% {
+    background: rgba(249, 115, 22, 0.38);
+    box-shadow: 0 0 22px rgba(249, 115, 22, 0.72);
+  }
+
+  32% {
+    background: rgba(250, 204, 21, 0.38);
+    box-shadow: 0 0 22px rgba(250, 204, 21, 0.72);
+  }
+
+  48% {
+    background: rgba(34, 197, 94, 0.38);
+    box-shadow: 0 0 22px rgba(34, 197, 94, 0.72);
+  }
+
+  64% {
+    background: rgba(59, 130, 246, 0.38);
+    box-shadow: 0 0 22px rgba(59, 130, 246, 0.72);
+  }
+
+  80% {
+    background: rgba(139, 92, 246, 0.38);
+    box-shadow: 0 0 22px rgba(139, 92, 246, 0.72);
+  }
+
+  100% {
+    background: rgba(236, 72, 153, 0.38);
+    box-shadow: 0 0 22px rgba(236, 72, 153, 0.72);
+  }
+}
+
+@keyframes rainbow-screen {
+  0% {
+    background:
+      linear-gradient(140deg, rgba(239, 68, 68, 0.48), transparent 34%),
+      linear-gradient(320deg, rgba(236, 72, 153, 0.38), transparent 36%),
+      #2a0808;
+  }
+
+  16% {
+    background:
+      linear-gradient(140deg, rgba(249, 115, 22, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(250, 204, 21, 0.38), transparent 36%),
+      #2a1708;
+  }
+
+  32% {
+    background:
+      linear-gradient(140deg, rgba(250, 204, 21, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(34, 197, 94, 0.38), transparent 36%),
+      #262008;
+  }
+
+  48% {
+    background:
+      linear-gradient(140deg, rgba(34, 197, 94, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(20, 184, 166, 0.38), transparent 36%),
+      #082416;
+  }
+
+  64% {
+    background:
+      linear-gradient(140deg, rgba(59, 130, 246, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(6, 182, 212, 0.38), transparent 36%),
+      #07182c;
+  }
+
+  80% {
+    background:
+      linear-gradient(140deg, rgba(139, 92, 246, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(236, 72, 153, 0.38), transparent 36%),
+      #190b2c;
+  }
+
+  100% {
+    background:
+      linear-gradient(140deg, rgba(236, 72, 153, 0.5), transparent 34%),
+      linear-gradient(320deg, rgba(239, 68, 68, 0.38), transparent 36%),
+      #2b0a1c;
   }
 }
 
