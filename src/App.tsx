@@ -78,9 +78,6 @@ function App() {
             >
               自動消化 {game.autoConsumeHolds ? 'ON' : 'OFF'}
             </button>
-            <button type="button" onClick={game.addHold} disabled={!game.canAddHold}>
-              保留を貯める
-            </button>
             {game.isGameOver && (
               <button type="button" className="secondary" onClick={game.resetGame}>
                 もう一度遊ぶ

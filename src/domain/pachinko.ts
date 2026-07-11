@@ -65,7 +65,7 @@ const buildNormalLoseReels = (random: () => number): [ReelSymbol, ReelSymbol, Re
 }
 
 export const createDrawResult = (random: () => number = Math.random): DrawResult => {
-  const isWin = random() < 1 / 20
+  const isWin = random() < 1 / 12.86
   const isReach = isWin || random() < 1 / 3.333
 
   if (isWin) {
@@ -99,6 +99,13 @@ export const createDrawResult = (random: () => number = Math.random): DrawResult
 export const createHold = (id: number, random: () => number = Math.random): Hold => {
   const colorId = pick(HOLD_COLOR_IDS, random)
 
+  return {
+    id,
+    color: HOLD_COLORS[colorId],
+  }
+}
+
+export const createHoldByColor = (id: number, colorId: HoldColorId): Hold => {
   return {
     id,
     color: HOLD_COLORS[colorId],

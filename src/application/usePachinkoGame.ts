@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createDrawResult,
-  createHold,
+  createHoldByColor,
   getRandomSymbol,
   type DrawResult,
   type Hold,
+  type HoldColorId,
   type ReelSymbol,
 } from '../domain/pachinko'
+import { holdWebSocketService } from '../infrastructure/holdWebSocket'
 import { playReachSound, playReelStartSound, playWinSound, primeReelStartSound } from '../infrastructure/reelSound'
 
 type GameStatus = 'idle' | 'spinning' | 'reachAnnounced' | 'reach' | 'betweenDraws' | 'won'
@@ -120,7 +122,7 @@ export const usePachinkoGame = () => {
     spinIntervalRef.current = null
   }, [])
 
-  const addHold = useCallback(() => {
+  const addHold = useCallback((colorId: HoldColorId) => {
     void primeReelStartSound()
 
     setState((current) => {
@@ -130,7 +132,7 @@ export const usePachinkoGame = () => {
 
       return {
         ...current,
-        holds: [...current.holds, createHold(current.nextHoldId)],
+        holds: [...current.holds, createHoldByColor(current.nextHoldId, colorId)],
         nextHoldId: current.nextHoldId + 1,
         message: '保留を追加しました。',
       }
@@ -288,6 +290,16 @@ export const usePachinkoGame = () => {
     runningRef.current = false
     setState(initialState)
   }, [clearTimers])
+
+  useEffect(() => {
+    holdWebSocketService.connect()
+
+    const unsubscribe = holdWebSocketService.subscribe(({ colorId }) => {
+      addHold(colorId)
+    })
+
+    return unsubscribe
+  }, [addHold])
 
   useEffect(() => {
     if (state.autoConsumeHolds && state.status === 'idle' && state.holds.length > 0) {
