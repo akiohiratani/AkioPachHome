@@ -1,10 +1,20 @@
-import type { CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import './App.css'
 import { usePachinkoGame } from './application/usePachinkoGame'
 import { getPatternPath } from './domain/pachinko'
+import { holdWebSocketService } from './infrastructure/holdWebSocket'
 
 function App() {
   const game = usePachinkoGame()
+  const [isQrOpen, setIsQrOpen] = useState(false)
+  const qrUrl = useMemo(() => {
+    const baseUrl = import.meta.env.VITE_QR_BASE_URL?.trim() || 'example.com'
+    const roomId = holdWebSocketService.getRoomId()
+    const normalizedBaseUrl = baseUrl.startsWith('http://') || baseUrl.startsWith('https://') ? baseUrl : `https://${baseUrl}`
+
+    return `${normalizedBaseUrl}?roomId=${roomId}`
+  }, [isQrOpen])
   const currentHold = game.holds[0] ?? null
   const currentHoldStyle = currentHold
     ? ({ '--hold-color': currentHold.color.cssColor } as CSSProperties)
@@ -78,6 +88,9 @@ function App() {
             >
               自動消化 {game.autoConsumeHolds ? 'ON' : 'OFF'}
             </button>
+            <button type="button" className="secondary" onClick={() => setIsQrOpen(true)}>
+              QR表示
+            </button>
             {game.isGameOver && (
               <button type="button" className="secondary" onClick={game.resetGame}>
                 もう一度遊ぶ
@@ -86,6 +99,23 @@ function App() {
           </div>
         </div>
       </section>
+
+      {isQrOpen && (
+        <div className="qr-modal" role="dialog" aria-modal="true" aria-label="QRコード表示">
+          <div className="qr-dialog">
+            <div className="qr-header">
+              <h2>QRコード</h2>
+              <button type="button" className="secondary" onClick={() => setIsQrOpen(false)}>
+                閉じる
+              </button>
+            </div>
+            <div className="qr-body">
+              <QRCodeSVG value={qrUrl} size={240} level="M" includeMargin />
+              <p className="qr-url">{qrUrl}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {game.isReaching && game.currentResult?.moviePath && (
         <div className="reach-modal" role="dialog" aria-modal="true" aria-label="リーチ演出">
