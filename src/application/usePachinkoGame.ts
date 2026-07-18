@@ -209,10 +209,10 @@ export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
         })
 
         if (isReachAnnounceStop) {
-          bgmPlayer.pause()
           void playReachSound()
 
           reachMovieTimerRef.current = window.setTimeout(() => {
+            bgmPlayer.pause()
             setState((current) => ({
               ...current,
               status: 'reach',
@@ -332,7 +332,7 @@ export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
   }, [state.status])
 
   useEffect(() => {
-    if (state.status === 'reachAnnounced' || state.status === 'reach') {
+    if (state.status === 'reach') {
       bgmPlayer.pause()
       return
     }
