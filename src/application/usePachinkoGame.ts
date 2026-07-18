@@ -10,6 +10,7 @@ import {
 } from '../domain/pachinko'
 import { holdWebSocketService } from '../infrastructure/holdWebSocket'
 import { playReachSound, playReelStartSound, playWinSound, primeReelStartSound } from '../infrastructure/reelSound'
+import type { BgmPlayer } from './BgmPlayer'
 
 type GameStatus = 'idle' | 'spinning' | 'reachAnnounced' | 'reach' | 'betweenDraws' | 'won'
 type ReelStopState = [boolean, boolean, boolean]
@@ -27,7 +28,7 @@ type GameState = {
   autoConsumeHolds: boolean
 }
 
-const MAX_HOLDS = 30
+const MAX_HOLDS = 15
 
 // 抽選開始から最初のリールが停止するまでの時間。
 const FIRST_REEL_STOP_MS = 1000
@@ -90,7 +91,7 @@ const getAfterLoseState = (current: GameState, loseMessage: string): GameState =
   }
 }
 
-export const usePachinkoGame = () => {
+export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
   const [state, setState] = useState<GameState>(initialState)
   const stopTimerRefs = useRef<number[]>([])
   const reachMovieTimerRef = useRef<number | null>(null)
@@ -208,6 +209,7 @@ export const usePachinkoGame = () => {
         })
 
         if (isReachAnnounceStop) {
+          bgmPlayer.pause()
           void playReachSound()
 
           reachMovieTimerRef.current = window.setTimeout(() => {
@@ -237,7 +239,7 @@ export const usePachinkoGame = () => {
 
       stopTimerRefs.current.push(timerId)
     })
-  }, [clearTimers])
+  }, [bgmPlayer, clearTimers])
 
   const finishReachMovie = useCallback(() => {
     if (spinIntervalRef.current !== null) {
@@ -328,6 +330,24 @@ export const usePachinkoGame = () => {
       }
     }
   }, [state.status])
+
+  useEffect(() => {
+    if (state.status === 'reachAnnounced' || state.status === 'reach') {
+      bgmPlayer.pause()
+      return
+    }
+
+    if (state.status === 'won') {
+      bgmPlayer.stop()
+      return
+    }
+
+    bgmPlayer.resume()
+  }, [bgmPlayer, state.status])
+
+  useEffect(() => {
+    return () => bgmPlayer.stop()
+  }, [bgmPlayer])
 
   useEffect(() => {
     return clearTimers

@@ -1,15 +1,20 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import './App.css'
+import type { BgmPlayer } from './application/BgmPlayer'
 import { usePachinkoGame } from './application/usePachinkoGame'
 import { getPatternPath } from './domain/pachinko'
 import { holdWebSocketService } from './infrastructure/holdWebSocket'
 
-function App() {
-  const game = usePachinkoGame()
+type AppProps = {
+  bgmPlayer: BgmPlayer
+}
+
+function App({ bgmPlayer }: AppProps) {
+  const game = usePachinkoGame(bgmPlayer)
   const [isQrOpen, setIsQrOpen] = useState(false)
   const qrUrl = useMemo(() => {
-    const baseUrl = import.meta.env.VITE_QR_BASE_URL?.trim() || 'example.com'
+    const baseUrl = import.meta.env.VITE_QR_BASE_URL?.trim() || 'd2rtynegadetpy.cloudfront.net'
     const roomId = holdWebSocketService.getRoomId()
     const normalizedBaseUrl = baseUrl.startsWith('http://') || baseUrl.startsWith('https://') ? baseUrl : `https://${baseUrl}`
 

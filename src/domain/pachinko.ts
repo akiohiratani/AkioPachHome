@@ -65,8 +65,8 @@ const buildNormalLoseReels = (random: () => number): [ReelSymbol, ReelSymbol, Re
 }
 
 export const createDrawResult = (random: () => number = Math.random): DrawResult => {
-  const isWin = random() < 1 / 12.86
-  const isReach = isWin || random() < 1 / 3.333
+  const isWin = random() < 1 / 10
+  const isReach = isWin || random() < 1 / 4
 
   if (isWin) {
     const movieNumber = pickNumber(1, 3, random)
