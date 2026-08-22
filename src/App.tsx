@@ -1,10 +1,11 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import './App.css'
 import type { BgmPlayer } from './application/BgmPlayer'
 import { usePachinkoGame } from './application/usePachinkoGame'
 import { getPatternPath } from './domain/pachinko'
 import { holdWebSocketService } from './infrastructure/holdWebSocket'
+import { cacheVideos, registerVideoServiceWorker, type VideoCacheProgress } from './infrastructure/videoCache'
 
 type AppProps = {
   bgmPlayer: BgmPlayer
@@ -13,6 +14,10 @@ type AppProps = {
 function App({ bgmPlayer }: AppProps) {
   const game = usePachinkoGame(bgmPlayer)
   const [isQrOpen, setIsQrOpen] = useState(false)
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState(true)
+  const [videoDownloadState, setVideoDownloadState] = useState<'idle' | 'downloading' | 'complete' | 'error'>('idle')
+  const [videoProgress, setVideoProgress] = useState<VideoCacheProgress>({ completed: 0, total: 8, currentPath: '' })
+  const reachVideoRef = useRef<HTMLVideoElement>(null)
   const qrUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_QR_BASE_URL?.trim() || 'd2rtynegadetpy.cloudfront.net'
     const roomId = holdWebSocketService.getRoomId()
@@ -30,6 +35,41 @@ function App({ bgmPlayer }: AppProps) {
   const handleGameStatus = (status: boolean) => {
     holdWebSocketService.sendGameStatus(status)
     setIsQrOpen(false)
+  }
+
+  useEffect(() => {
+    void registerVideoServiceWorker()
+  }, [])
+
+  useEffect(() => {
+    const video = reachVideoRef.current
+    if (!video || !game.isReaching || !game.currentResult?.moviePath) return
+
+    video.muted = true
+    video.currentTime = 0
+    void video.play()
+      .then(() => {
+        console.log('VIDEO PLAY SUCCESS')
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error) {
+          console.error('VIDEO PLAY ERROR', error.name, error.message)
+          return
+        }
+
+        console.error('VIDEO PLAY ERROR', 'UnknownError', String(error))
+      })
+  }, [game.isReaching, game.currentResult?.moviePath])
+
+  const startVideoDownload = async () => {
+    setVideoDownloadState('downloading')
+    try {
+      await cacheVideos(setVideoProgress)
+      setVideoDownloadState('complete')
+      setIsWelcomeOpen(false)
+    } catch {
+      setVideoDownloadState('error')
+    }
   }
 
   return (
@@ -144,13 +184,43 @@ function App({ bgmPlayer }: AppProps) {
               </div>
             )}
             <video
+              ref={reachVideoRef}
               src={game.currentResult.moviePath}
               autoPlay
+              muted
               playsInline
+              preload="auto"
               controls={false}
               onEnded={game.finishReachMovie}
               onError={game.finishReachMovie}
             />
+          </div>
+        </div>
+      )}
+
+      {isWelcomeOpen && (
+        <div className="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+          <div className="welcome-dialog">
+            <p className="kicker">Akio Pach</p>
+            <h2 id="welcome-title">Welcome!!</h2>
+            {videoDownloadState === 'idle' && (
+              <button type="button" onClick={() => void startVideoDownload()}>
+                Click
+              </button>
+            )}
+            {videoDownloadState === 'downloading' && (
+              <div className="video-download-progress" aria-live="polite">
+                <progress value={videoProgress.completed} max={videoProgress.total} />
+                <strong>{videoProgress.completed} / {videoProgress.total}</strong>
+                <span>準備中...</span>
+              </div>
+            )}
+            {videoDownloadState === 'error' && (
+              <div className="video-download-error" role="alert">
+                <p>動画のダウンロードに失敗しました。通信状態を確認してください。</p>
+                <button type="button" onClick={() => void startVideoDownload()}>再試行</button>
+              </div>
+            )}
           </div>
         </div>
       )}

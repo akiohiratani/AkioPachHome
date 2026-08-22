@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## 動画キャッシュとS3/CloudFrontへの配置
+
+初回表示のウェルカムダイアログから、`public/Movie` の動画8本をブラウザのCache Storageへ保存します。Service Workerが同じオリジンの動画リクエストをキャッシュ優先で返すため、2回目以降は動画再生時の通信を減らせます。
+
+デプロイ時は、`npm run build`で生成された`dist`の中身をS3へアップロードしてください。`sw.js`はルート（`https://example.com/sw.js`）で配信する必要があり、Content-Typeは`application/javascript`にします。CloudFrontでは`sw.js`を長期キャッシュせず、更新時に無効化してください。
+
+動画を差し替えた場合は、`src/infrastructure/videoCache.ts`と`public/sw.js`の`VIDEO_CACHE_NAME`の末尾バージョンを更新し、古い動画キャッシュを使わないようにします。
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

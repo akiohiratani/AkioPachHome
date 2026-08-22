@@ -1,9 +1,12 @@
 .pachinko-app {
-  min-height: 100svh;
+  width: 100%;
+  height: 100svh;
+  min-height: 0;
   display: grid;
   place-items: center;
-  padding: 32px 18px;
+  padding: clamp(10px, 2vmin, 32px) clamp(10px, 1.5vw, 18px);
   box-sizing: border-box;
+  overflow: auto;
   background:
     linear-gradient(140deg, rgba(199, 38, 68, 0.2), transparent 34%),
     linear-gradient(320deg, rgba(12, 132, 130, 0.18), transparent 36%),
@@ -16,9 +19,10 @@
 
 .machine {
   width: min(920px, 100%);
+  max-height: 100%;
   display: grid;
-  gap: 24px;
-  padding: clamp(20px, 4vw, 42px);
+  gap: clamp(8px, 2vmin, 24px);
+  padding: clamp(12px, 3vmin, 42px);
   border: 1px solid rgba(255, 233, 184, 0.35);
   border-radius: 8px;
   background:
@@ -225,7 +229,8 @@ button.secondary {
 }
 
 .qr-modal,
-.reach-modal {
+.reach-modal,
+.welcome-modal {
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -233,6 +238,58 @@ button.secondary {
   place-items: center;
   padding: clamp(12px, 3vw, 32px);
   background: rgba(0, 0, 0, 0.84);
+}
+
+.welcome-modal {
+  z-index: 20;
+}
+
+.welcome-dialog {
+  width: min(480px, 92vw);
+  display: grid;
+  gap: 16px;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid rgba(120, 214, 210, 0.65);
+  border-radius: 8px;
+  background: #231918;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.55);
+}
+
+.welcome-dialog h2,
+.welcome-dialog p {
+  margin: 0;
+}
+
+.welcome-dialog h2 {
+  color: #fff8e5;
+  font-size: clamp(22px, 4vw, 30px);
+}
+
+.welcome-dialog > p:not(.kicker) {
+  color: #e9d9bd;
+}
+
+.video-download-progress {
+  display: grid;
+  gap: 8px;
+  color: #e9d9bd;
+}
+
+.video-download-progress progress {
+  width: 100%;
+  height: 14px;
+  accent-color: #78d6d2;
+}
+
+.video-download-progress strong {
+  color: #fff8e5;
+  font-size: 20px;
+}
+
+.video-download-error {
+  display: grid;
+  gap: 12px;
+  color: #ffb4a8;
 }
 
 .qr-dialog {
@@ -288,8 +345,10 @@ button.secondary {
 
 .movie-stage {
   position: relative;
-  width: min(1120px, 96vw);
-  height: min(720px, 88svh);
+  width: min(1120px, 100%);
+  height: min(720px, 100%);
+  max-width: 100%;
+  max-height: 100%;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 213, 111, 0.55);
@@ -434,6 +493,11 @@ button.secondary {
 }
 
 @media (max-width: 760px) {
+  .pachinko-app {
+    height: auto;
+    min-height: 100svh;
+  }
+
   .game-panel {
     grid-template-columns: 1fr;
     justify-items: center;
@@ -454,5 +518,44 @@ button.secondary {
 
   .qr-footer {
     flex-direction: column;
+  }
+}
+
+@media (max-height: 650px) and (min-width: 761px) {
+  .pachinko-app {
+    padding: 8px 12px;
+  }
+
+  .machine {
+    width: min(820px, 100%);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .machine-header {
+    gap: 2px;
+  }
+
+  .status-message {
+    min-height: 24px;
+    font-size: 16px;
+  }
+
+  .reel-window {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .reel {
+    aspect-ratio: 1 / 0.92;
+  }
+
+  .winning-hold {
+    padding: 6px 12px;
+  }
+
+  .hold-lamp {
+    width: 30px;
+    height: 30px;
   }
 }
