@@ -34,7 +34,7 @@ type GameState = {
   autoConsumeHolds: boolean
 }
 
-const MAX_HOLDS = 15
+const MAX_HOLDS = 18
 
 // 抽選開始から最初のリールが停止するまでの時間。
 const FIRST_REEL_STOP_MS = 1000
