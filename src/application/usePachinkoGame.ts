@@ -323,6 +323,7 @@ export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
     previousHoldCountRef.current = currentHoldCount
 
     if (previousHoldCount < MAX_HOLDS && currentHoldCount === MAX_HOLDS) {
+      holdWebSocketService.sendGameStatus(false)
       void playMaxHoldSound()
     }
   }, [state.holds.length])
