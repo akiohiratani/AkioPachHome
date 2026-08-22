@@ -278,6 +278,14 @@ button.secondary {
   text-align: center;
 }
 
+.qr-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 233, 184, 0.2);
+}
+
 .movie-stage {
   position: relative;
   width: min(1120px, 96vw);
@@ -442,5 +450,9 @@ button.secondary {
 
   button {
     width: 100%;
+  }
+
+  .qr-footer {
+    flex-direction: column;
   }
 }

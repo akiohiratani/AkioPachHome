@@ -27,6 +27,10 @@ function App({ bgmPlayer }: AppProps) {
   const winningHoldStyle = game.winningHold
     ? ({ '--hold-color': game.winningHold.color.cssColor } as CSSProperties)
     : undefined
+  const handleGameStatus = (status: boolean) => {
+    holdWebSocketService.sendGameStatus(status)
+    setIsQrOpen(false)
+  }
 
   return (
     <main className={`pachinko-app ${game.isGameOver ? 'is-rainbow-screen' : ''}`}>
@@ -118,6 +122,14 @@ function App({ bgmPlayer }: AppProps) {
               <QRCodeSVG value={qrUrl} size={240} level="M" includeMargin />
               <p className="qr-url">{qrUrl}</p>
             </div>
+            <footer className="qr-footer">
+              <button type="button" onClick={() => handleGameStatus(true)}>
+                ゲーム開始
+              </button>
+              <button type="button" className="secondary" onClick={() => handleGameStatus(false)}>
+                終了
+              </button>
+            </footer>
           </div>
         </div>
       )}

@@ -8,9 +8,16 @@ type HoldAddMessage = {
 
 type HoldAddListener = (payload: { colorId: HoldColorId }) => void
 
+type StartGameMessage = {
+  action: 'startGame'
+  roomId: string
+  status: boolean
+}
+
 class HoldWebSocketService {
   private socket: WebSocket | null = null
   private readonly listeners = new Set<HoldAddListener>()
+  private readonly pendingMessages: StartGameMessage[] = []
   private readonly roomId: string
   private readonly endpoint: string
   private connected = false
@@ -32,6 +39,7 @@ class HoldWebSocketService {
     this.socket = new WebSocket(url.toString())
     this.socket.addEventListener('open', () => {
       this.connected = true
+      this.flushPendingMessages()
     })
     this.socket.addEventListener('message', (event) => {
       if (typeof event.data !== 'string') {
@@ -60,6 +68,32 @@ class HoldWebSocketService {
   getRoomId = () => this.roomId
 
   isConnected = () => this.connected
+
+  sendGameStatus = (status: boolean) => {
+    const message: StartGameMessage = {
+      action: 'startGame',
+      roomId: this.roomId,
+      status,
+    }
+
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message))
+      return
+    }
+
+    this.pendingMessages.push(message)
+    this.connect()
+  }
+
+  private flushPendingMessages = () => {
+    if (this.socket?.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    this.pendingMessages.splice(0).forEach((message) => {
+      this.socket?.send(JSON.stringify(message))
+    })
+  }
 
   private handleMessage = (rawMessage: string) => {
     try {

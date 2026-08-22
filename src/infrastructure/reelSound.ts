@@ -130,6 +130,10 @@ export const playReelStartSound = async () => {
   await playRandomSound(reelStartSounds)
 }
 
+export const playMaxHoldSound = async () => {
+  await playRandomSound(reelStartSounds)
+}
+
 export const playReachSound = async () => {
   await playRandomSound(reachSounds)
 }

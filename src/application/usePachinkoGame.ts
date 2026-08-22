@@ -9,7 +9,13 @@ import {
   type ReelSymbol,
 } from '../domain/pachinko'
 import { holdWebSocketService } from '../infrastructure/holdWebSocket'
-import { playReachSound, playReelStartSound, playWinSound, primeReelStartSound } from '../infrastructure/reelSound'
+import {
+  playMaxHoldSound,
+  playReachSound,
+  playReelStartSound,
+  playWinSound,
+  primeReelStartSound,
+} from '../infrastructure/reelSound'
 import type { BgmPlayer } from './BgmPlayer'
 
 type GameStatus = 'idle' | 'spinning' | 'reachAnnounced' | 'reach' | 'betweenDraws' | 'won'
@@ -99,6 +105,7 @@ export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
   const nextDrawTimerRef = useRef<number | null>(null)
   const spinIntervalRef = useRef<number | null>(null)
   const runningRef = useRef(false)
+  const previousHoldCountRef = useRef(initialState.holds.length)
 
   const clearTimers = useCallback(() => {
     stopTimerRefs.current.forEach((timerId) => window.clearTimeout(timerId))
@@ -308,6 +315,17 @@ export const usePachinkoGame = (bgmPlayer: BgmPlayer) => {
       startDraw()
     }
   }, [startDraw, state.autoConsumeHolds, state.holds.length, state.status])
+
+  useEffect(() => {
+    const previousHoldCount = previousHoldCountRef.current
+    const currentHoldCount = state.holds.length
+
+    previousHoldCountRef.current = currentHoldCount
+
+    if (previousHoldCount < MAX_HOLDS && currentHoldCount === MAX_HOLDS) {
+      void playMaxHoldSound()
+    }
+  }, [state.holds.length])
 
   useEffect(() => {
     if (state.status !== 'betweenDraws') {
