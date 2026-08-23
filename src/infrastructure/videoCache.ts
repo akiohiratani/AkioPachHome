@@ -5,6 +5,10 @@ export const VIDEO_PATHS = [
   ...Array.from({ length: 7 }, (_, index) => `/Movie/Lose/${index + 1}.mp4`),
 ]
 
+export const getReachAudioPath = (moviePath: string) => {
+  return moviePath.replace(/\.mp4(?=([?#]|$))/i, '.mp3')
+}
+
 export type VideoCacheProgress = {
   completed: number
   total: number
@@ -13,18 +17,26 @@ export type VideoCacheProgress = {
 
 const getVideoCache = () => caches.open(VIDEO_CACHE_NAME)
 
+const cacheMediaFile = async (cache: Cache, path: string) => {
+  const cachedResponse = await cache.match(path)
+  if (cachedResponse) return
+
+  const response = await fetch(path, { cache: 'no-cache' })
+  if (!response.ok) {
+    throw new Error(`${path} (${response.status})`)
+  }
+
+  await cache.put(path, response)
+}
+
 export const cacheVideos = async (onProgress: (progress: VideoCacheProgress) => void) => {
   const cache = await getVideoCache()
 
   for (const path of VIDEO_PATHS) {
-    const cachedResponse = await cache.match(path)
-    if (!cachedResponse) {
-      const response = await fetch(path, { cache: 'no-cache' })
-      if (!response.ok) {
-        throw new Error(`${path} (${response.status})`)
-      }
-      await cache.put(path, response)
-    }
+    await Promise.all([
+      cacheMediaFile(cache, path),
+      cacheMediaFile(cache, getReachAudioPath(path)),
+    ])
 
     onProgress({
       completed: VIDEO_PATHS.indexOf(path) + 1,

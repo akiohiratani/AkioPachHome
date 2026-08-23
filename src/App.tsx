@@ -5,11 +5,18 @@ import type { BgmPlayer } from './application/BgmPlayer'
 import { usePachinkoGame } from './application/usePachinkoGame'
 import { getPatternPath } from './domain/pachinko'
 import { holdWebSocketService } from './infrastructure/holdWebSocket'
-import { cacheVideos, registerVideoServiceWorker, type VideoCacheProgress } from './infrastructure/videoCache'
+import {
+  cacheVideos,
+  getReachAudioPath,
+  registerVideoServiceWorker,
+  type VideoCacheProgress,
+} from './infrastructure/videoCache'
 
 type AppProps = {
   bgmPlayer: BgmPlayer
 }
+
+const REACH_AUDIO_PRIME_PATH = '/Movie/Win/1.mp3'
 
 function App({ bgmPlayer }: AppProps) {
   const game = usePachinkoGame(bgmPlayer)
@@ -18,6 +25,7 @@ function App({ bgmPlayer }: AppProps) {
   const [videoDownloadState, setVideoDownloadState] = useState<'idle' | 'downloading' | 'complete' | 'error'>('idle')
   const [videoProgress, setVideoProgress] = useState<VideoCacheProgress>({ completed: 0, total: 8, currentPath: '' })
   const reachVideoRef = useRef<HTMLVideoElement>(null)
+  const reachAudioRef = useRef<HTMLAudioElement>(null)
   const qrUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_QR_BASE_URL?.trim() || 'd2rtynegadetpy.cloudfront.net'
     const roomId = holdWebSocketService.getRoomId()
@@ -26,6 +34,9 @@ function App({ bgmPlayer }: AppProps) {
     return `${normalizedBaseUrl}?roomId=${roomId}`
   }, [isQrOpen])
   const currentHold = game.holds[0] ?? null
+  const reachAudioPath = game.currentResult?.moviePath
+    ? getReachAudioPath(game.currentResult.moviePath)
+    : REACH_AUDIO_PRIME_PATH
   const currentHoldStyle = currentHold
     ? ({ '--hold-color': currentHold.color.cssColor } as CSSProperties)
     : undefined
@@ -43,15 +54,87 @@ function App({ bgmPlayer }: AppProps) {
 
   useEffect(() => {
     const video = reachVideoRef.current
-    if (!video || !game.isReaching || !game.currentResult?.moviePath) return
+    const audio = reachAudioRef.current
+    if (!video || !audio || !game.isReaching || !game.currentResult?.moviePath) return
 
+    video.defaultMuted = true
     video.muted = true
+    video.volume = 0
     video.currentTime = 0
-    void video.play()
+    audio.pause()
+    audio.muted = false
+    audio.volume = 1
+    audio.currentTime = 0
+
+    let isCurrentPlayback = true
+    let isWaitingForUserActivation = false
+
+    const removeUserActivationListeners = () => {
+      if (!isWaitingForUserActivation) return
+
+      window.removeEventListener('pointerdown', handleUserActivation, { capture: true })
+      window.removeEventListener('keydown', handleUserActivation, { capture: true })
+      isWaitingForUserActivation = false
+    }
+
+    const addUserActivationListeners = () => {
+      if (isWaitingForUserActivation || !isCurrentPlayback) return
+
+      window.addEventListener('pointerdown', handleUserActivation, { capture: true })
+      window.addEventListener('keydown', handleUserActivation, { capture: true })
+      isWaitingForUserActivation = true
+    }
+
+    const reportAudioPlayError = (error: unknown) => {
+      if (error instanceof Error) {
+        console.error('REACH AUDIO PLAY ERROR', error.name, error.message)
+        return
+      }
+
+      console.error('REACH AUDIO PLAY ERROR', 'UnknownError', String(error))
+    }
+
+    const playReachAudio = (syncWithVideo: boolean) => {
+      if (!isCurrentPlayback) return
+
+      if (syncWithVideo) {
+        try {
+          audio.currentTime = video.currentTime
+        } catch {
+          audio.currentTime = 0
+        }
+      }
+
+      void audio.play()
+        .then(() => {
+          console.log('REACH AUDIO PLAY SUCCESS', audio.currentSrc)
+          removeUserActivationListeners()
+        })
+        .catch((error: unknown) => {
+          reportAudioPlayError(error)
+          addUserActivationListeners()
+        })
+    }
+
+    function handleUserActivation() {
+      removeUserActivationListeners()
+      playReachAudio(true)
+    }
+
+    const videoPlayPromise = video.play()
+    playReachAudio(false)
+
+    void videoPlayPromise
       .then(() => {
         console.log('VIDEO PLAY SUCCESS')
       })
       .catch((error: unknown) => {
+        if (isCurrentPlayback) {
+          removeUserActivationListeners()
+          audio.pause()
+          audio.currentTime = 0
+        }
+
         if (error instanceof Error) {
           console.error('VIDEO PLAY ERROR', error.name, error.message)
           return
@@ -59,9 +142,38 @@ function App({ bgmPlayer }: AppProps) {
 
         console.error('VIDEO PLAY ERROR', 'UnknownError', String(error))
       })
+
+    return () => {
+      isCurrentPlayback = false
+      removeUserActivationListeners()
+      audio.pause()
+      audio.currentTime = 0
+    }
   }, [game.isReaching, game.currentResult?.moviePath])
 
+  const primeReachAudio = () => {
+    const audio = reachAudioRef.current
+    if (!audio) return
+
+    audio.volume = 0
+    void audio.play()
+      .then(() => {
+        if (!reachVideoRef.current) {
+          audio.pause()
+          audio.currentTime = 0
+        }
+        audio.volume = 1
+      })
+      .catch((error: unknown) => {
+        audio.volume = 1
+        if (error instanceof Error) {
+          console.error('REACH AUDIO PRIME ERROR', error.name, error.message)
+        }
+      })
+  }
+
   const startVideoDownload = async () => {
+    primeReachAudio()
     setVideoDownloadState('downloading')
     try {
       await cacheVideos(setVideoProgress)
@@ -148,6 +260,8 @@ function App({ bgmPlayer }: AppProps) {
           </div>
         </div>
       </section>
+
+      <audio ref={reachAudioRef} src={reachAudioPath} preload="auto" />
 
       {isQrOpen && (
         <div className="qr-modal" role="dialog" aria-modal="true" aria-label="QRコード表示">
